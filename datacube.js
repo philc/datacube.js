@@ -95,7 +95,7 @@ class PagedArray {
 
   clone() {
     const dest = new PagedArray(this.arrayType, this.pageSize);
-    for (let page of this.pages) {
+    for (const page of this.pages) {
       dest.pages.push(page.slice(0));
     }
     dest._length = this._length;
@@ -160,8 +160,6 @@ const readFromUrl = async (urlPrefix) => {
   dc.dimenIndexToValue = manifest.dimenIndexToValue;
 
   // TODO(philc): This could be done more efficiently by copying/adopting the byte ranges directly.
-  const valueSize = dc.dimenKeyToIndices.BYTES_PER_ELEMENT;
-
   let bytes;
   bytes = await (await fetch(`${urlPrefix}.dimens.bin`)).arrayBuffer();
   dc.dimenKeyToIndices = new PagedArray(ARRAY_TYPES.dimenKeyToIndices, bytes);
@@ -219,7 +217,7 @@ class DataCube {
   getWritableStream() {
     let rowCount = 0;
     return new WritableStream({
-      write: async (chunk) => {
+      write: (chunk) => {
         this.addRow(chunk);
         rowCount++;
         // Progress output
@@ -440,7 +438,6 @@ class DataCube {
     const destDimenKeyToIndices = new PagedArray(dest.dimenKeyToIndices.arrayType);
     for (let rowIndex = 0; rowIndex < this.count(); rowIndex++) {
       if (this.includeRow(rowIndex, dimenFilters)) {
-        const dimenIndicesOffset = rowIndex * this.dimens.length;
         this.dimenKeyToIndices.copy(
           rowIndex * this.dimens.length,
           destDimenKeyToIndices,
@@ -499,9 +496,9 @@ class DataCube {
     this.assertValidDimensions([dimen]);
     const rows = this.getRows();
     const metricNames = [];
-    for (let row of rows) {
+    for (const row of rows) {
       const dimenValue = row[dimen];
-      for (let metric of this.metrics) {
+      for (const metric of this.metrics) {
         const newMetric = keyNameFn ? keyNameFn(dimenValue, metric) : `${dimenValue}-${metric}`;
         if (metricNames.indexOf(newMetric) == -1) metricNames.push(newMetric);
         row[newMetric] = row[metric];
@@ -509,7 +506,7 @@ class DataCube {
         // unnecessary.
       }
     }
-    let reducedDimens = Array.from(this.dimens);
+    const reducedDimens = Array.from(this.dimens);
     reducedDimens.splice(this.dimens.indexOf(dimen), 1);
     return fromRows(reducedDimens, Array.from(metricNames), rows);
   }
@@ -533,7 +530,7 @@ class DataCube {
         create: true,
       });
       const dimenWriter = file.writable.getWriter();
-      for (let [pIndex, page] of pagedArray.pages.entries()) {
+      for (const [pIndex, page] of pagedArray.pages.entries()) {
         let chunk;
         if ((pIndex + 1) * page.length < pagedArray.length) {
           chunk = page;
@@ -561,7 +558,7 @@ class DataCube {
     // This could be made more efficient by operating on the dataview's internal data structures, so
     // we avoid materializing the row maps.
     const destDv = new DataCube(this.dimens, this.metrics);
-    for (let row of this.getRows()) {
+    for (const row of this.getRows()) {
       if (!set.has(row[dimen])) {
         row[dimen] = placeholderValue;
       }

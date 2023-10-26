@@ -1,15 +1,14 @@
-import * as shoulda from "../shoulda.js/shoulda.js";
 import { assert, context, setup, should } from "../shoulda.js/shoulda.js";
 
 import * as DataCube from "./datacube.js";
 
 context("datacube", () => {
-  let rows = [
+  const rows = [
     { d1: "a", m1: 2 },
     { d1: "b", m1: 3 },
   ];
 
-  let rows2 = [
+  const rows2 = [
     { d1: "a", d2: "b", m1: 2 },
     { d1: "a", d2: "c", m1: 3 },
   ];
@@ -73,7 +72,7 @@ context("datacube", () => {
   });
 
   should("explodeDimenIntoColumns", () => {
-    let dc = dc2.explodeDimenIntoColumns("d1");
+    const dc = dc2.explodeDimenIntoColumns("d1");
     assert.equal(
       [
         { d2: "b", "a-m1": 2 },
