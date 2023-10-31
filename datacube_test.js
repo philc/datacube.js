@@ -1,4 +1,5 @@
-import { assert, context, setup, should } from "../shoulda.js/shoulda.js";
+import * as shoulda from "https://deno.land/x/shoulda@v2.0/shoulda.js";
+const { assert, context, setup, should } = shoulda;
 
 import * as DataCube from "./datacube.js";
 
