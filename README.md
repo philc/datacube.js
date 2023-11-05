@@ -1,6 +1,6 @@
-# DataCube.js - High-performance data cubes in JavaScript
+# Datacube.js - High-performance data cubes in JavaScript
 
-DataCube.js is a library for efficiently filtering and manipulating OLAP data cubes in JavaScript.
+Datacube.js is a library for efficiently filtering and manipulating OLAP data cubes in JavaScript.
 
 An OLAP data cube is a set of rows, each containing one or more metrics which are grouped by a set
 of dimensions.
@@ -34,4 +34,4 @@ const totalsForFiction = dc.where({ category: (c) => c == "fiction" }).totals();
 
 ## License
 
-Datacube.js is licensed under the [MIT license](LICENSE.txt).
+Licensed under the [MIT license](LICENSE.txt).
