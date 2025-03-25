@@ -1,12 +1,16 @@
 {
-  "version": "3",
-  "remote": {
-    "https://deno.land/std@0.118.0/_util/assert.ts": "2f868145a042a11d5ad0a3c748dcf580add8a0dbc0e876eaa0026303a5488f58",
-    "https://deno.land/std@0.118.0/bytes/bytes_list.ts": "3bff6a09c72b2e0b1e92e29bd3b135053894196cca07a2bba842901073efe5cb",
-    "https://deno.land/std@0.118.0/bytes/equals.ts": "69f55fdbd45c71f920c1a621e6c0865dc780cd8ae34e0f5e55a9497b70c31c1b",
-    "https://deno.land/std@0.118.0/bytes/mod.ts": "fedb80b8da2e7ad8dd251148e65f92a04c73d6c5a430b7d197dc39588c8dda6f",
-    "https://deno.land/std@0.118.0/io/buffer.ts": "8f10342821b81990acf859cdccb4e4031c7c9187a0ffc3ed6b356ee29ecc6681",
-    "https://deno.land/std@0.118.0/streams/conversion.ts": "7ff9af42540063fa72003ab31a377ba9dde8532d43b16329b933c37a6d7aac5f",
-    "https://deno.land/x/shoulda@v2.0/shoulda.js": "d42d0b414e2dba1d2b9e566e0fc39bbf4c4e305e55c70324a5658490d663adbd"
+  "version": "4",
+  "specifiers": {
+    "jsr:@philc/shoulda@2": "2.0.0"
+  },
+  "jsr": {
+    "@philc/shoulda@2.0.0": {
+      "integrity": "2bc8b2eb9e5dee41fcd77760b009d3b3527980edf5b29cbf9f25443489a5faa9"
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@philc/shoulda@2"
+    ]
   }
 }
