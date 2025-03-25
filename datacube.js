@@ -524,11 +524,8 @@ class DataCube {
     );
 
     const writePagedArray = async (fileName, pagedArray) => {
-      const file = await Deno.open(fileName, {
-        write: true,
-        truncate: true,
-        create: true,
-      });
+      const file = await Deno.create(fileName);
+      const writer = file.writable.getWriter();
       for (const [pIndex, page] of pagedArray.pages.entries()) {
         let chunk;
         if ((pIndex + 1) * page.length < pagedArray.length) {
@@ -539,9 +536,9 @@ class DataCube {
         // NOTE(philc): I believe Deno.write should work with a Uint32Array and other typed arrays,
         // but it doesn't at the time of writing. It fails with "expected typed ArrayBufferView". So
         // first we convert our typed array to a Uint8Array.
-        await Deno.write(file.rid, new Uint8Array(chunk.buffer));
+        await writer.write(new Uint8Array(chunk.buffer));
       }
-      file.close();
+      writer.close();
     };
 
     await writePagedArray(`${pathPrefix}.dimens.bin`, this.dimenKeyToIndices);
