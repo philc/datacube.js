@@ -29,7 +29,7 @@ class PagedArray {
     if (arg instanceof ArrayBuffer) {
       const bytes = arg.byteLength;
       if (bytes % this.BYTES_PER_ELEMENT != 0) {
-        throw `ArrayBuffer's length should be a multiple of ${this.BYTES_PER_ELEMENT}.`;
+        throw new Error(`ArrayBuffer's length should be a multiple of ${this.BYTES_PER_ELEMENT}.`);
       }
       pageSize = arg.byteLength;
       this.pages[0] = new this.arrayType(arg);
@@ -261,8 +261,10 @@ class DataCube {
   assertValidDimensions(dimens) {
     const incorrectDimens = dimens.filter((d) => !this.dimens.includes(d));
     if (incorrectDimens.length > 0) {
-      throw `These dimens are not part of the datacube: [${incorrectDimens}]. ` +
-        `The datacube has: [${this.dimens}].`;
+      throw new Error(
+        `These dimens are not part of the datacube: [${incorrectDimens}]. ` +
+          `The datacube has: [${this.dimens}].`,
+      );
     }
   }
 
