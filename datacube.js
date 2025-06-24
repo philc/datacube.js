@@ -10,10 +10,8 @@
 //   [{ genre: "Fiction", title: "Pride and Prejudice", author: "Jane Austen", day: "2023-01-01" },
 //    { sales: 100, revenue: 2130.05, views: 5000 }]
 
-/*
- * An array-like type that allocates its backing arrays in large pages.
- * This prevents GC as the array grows.
- */
+// An array-like type that allocates its backing arrays in large pages.
+// This prevents GC as the array grows.
 class PagedArray {
   // Constructor can take either a pageSize (in bytes), or an ArrayBuffer.
   // - arrayType: A typed array type, e.g. UInt32Array.
@@ -127,32 +125,32 @@ const ARRAY_TYPES = {
 // Returns a DataCube from `rows` with the given dimens and metrics.
 // - rows: a list of objects which have each dimen in `dimens` and each metric in `metrics` as
 //   properties.
-const fromRows = (dimens, metrics, rows) => {
+export function fromRows(dimens, metrics, rows) {
   const dc = new DataCube(dimens, metrics);
   for (const row of rows) {
     dc.addRow(row);
   }
   return dc;
-};
+}
 
-const readFromFile = (pathPrefix) => {
+export function readFromFile(pathPrefix) {
   // Make filePath into an absolute path, which is required by the fetch API.
   const isRelative = !pathPrefix.startsWith("/");
   if (isRelative) {
     pathPrefix = Deno.cwd() + "/" + pathPrefix;
   }
   return readFromUrl("file://" + pathPrefix);
-};
+}
 
-/*
- * A datacube is serialized as 3 files and can be fetched from the network (using fetch) or a file.
- * - urlPrefix: the prefix of the path. E.g. if the datacube is in tmp/dc.json, the pathPrefix is
-     tmp/dc
- *
- * NOTE(philc): This API could take a set of readable streams rather than just a path. We would need
- * to expose a variable which indicates the schema of how the files of a datacube are named.
- */
-const readFromUrl = async (urlPrefix) => {
+//
+// A datacube is serialized as 3 files and can be fetched from the network (using fetch) or a file.
+// - urlPrefix: the prefix of the path. E.g. if the datacube is in tmp/dc.json, the pathPrefix is
+//   tmp/dc
+//
+// NOTE(philc): This API could take a set of readable streams rather than just a path. We would need
+// to expose a variable which indicates the schema of how the files of a datacube are named.
+//
+export async function readFromUrl(urlPrefix) {
   const response = await fetch(`${urlPrefix}.json`);
   const manifest = await response.json();
   const dc = new DataCube(manifest.dimens, manifest.metrics);
@@ -167,9 +165,9 @@ const readFromUrl = async (urlPrefix) => {
   dc.metricsData = new PagedArray(ARRAY_TYPES.metrics, bytes);
 
   return dc;
-};
+}
 
-class DataCube {
+export class DataCube {
   constructor(dimens, metrics) {
     this.separator = ",";
 
@@ -564,5 +562,3 @@ class DataCube {
     return destDv;
   }
 }
-
-export { DataCube, fromRows, readFromFile, readFromUrl };
