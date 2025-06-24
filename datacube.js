@@ -1,15 +1,14 @@
-/*
- * DataCube.js is a library that makes it simple and efficient to slice and dice multi-dimensional
- * data sets that fit in RAM. It provides a single data structure, called a DataCube, and many
- * functions to construct and manipulate these cubes.
-
- * A DataCube, akin to an OLAP data cube, is a collection of cells, each one uniquely identified by
- * set of dimension values and containing the corresponding metrics. For example, a data cube
- * encapsulating a book store's data could have as dimensions [genre, title, author, day] and metrics
- * [sales, revenue, views]. A sample cell in this the data cube would be:
- *     [{ genre: "Fiction", title: "Pride and Prejudice", author: "Jane Austen", day: "2023-01-01" },
- *      { sales: 100, revenue: 2130.05, views: 5000 }]
-*/
+//
+// Datacube.js is a library that makes it simple and efficient to slice and dice multi-dimensional
+// data sets that fit in RAM. It provides a single data structure, called a DataCube, and many
+// functions to construct and manipulate these cubes.
+//
+// A DataCube, akin to an OLAP data cube, is a collection of cells, each one uniquely identified by
+// set of dimension values and containing the corresponding metrics. For example, a data cube
+// containing a book store's data could have as dimensions [genre, title, author, day], and metrics
+// [sales, revenue, views]. An example cell in this the data cube would be:
+//   [{ genre: "Fiction", title: "Pride and Prejudice", author: "Jane Austen", day: "2023-01-01" },
+//    { sales: 100, revenue: 2130.05, views: 5000 }]
 
 /*
  * An array-like type that allocates its backing arrays in large pages.
@@ -18,7 +17,7 @@
 class PagedArray {
   // Constructor can take either a pageSize (in bytes), or an ArrayBuffer.
   // - arrayType: A typed array type, e.g. UInt32Array.
-  // - arg: optional; an ArrayBuffer, or a pageSize.
+  // - arg: optional; an ArrayBuffer or a pageSize.
   //   When arg is an ArrayBuffer, pageSize will be equal to its length.
   constructor(arrayType, arg) {
     this.pages = [];
@@ -551,10 +550,7 @@ class DataCube {
   // sorting using the given `compare-fn`. The dimension value for the collapsed rows will be
   // replaced with `placeholder-value`.
   aggregateTailValues(dimen, compareFn, n, placeholderValue) {
-    const sortedRows = this.select([dimen]).getRows().sort(compareFn).slice(
-      0,
-      n,
-    );
+    const sortedRows = this.select([dimen]).getRows().sort(compareFn).slice(0, n);
     const set = new Set(sortedRows.map((row) => row[dimen]));
     // This could be made more efficient by operating on the dataview's internal data structures, so
     // we avoid materializing the row maps.
