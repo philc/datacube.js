@@ -1,6 +1,7 @@
 import * as shoulda from "@philc/shoulda";
-const { assert, context, setup, should } = shoulda;
+const { assert, context, setup, should, teardown } = shoulda;
 
+import * as fs from "@std/fs";
 import * as DataCube from "./datacube.js";
 
 context("datacube", () => {
@@ -83,17 +84,40 @@ context("datacube", () => {
     );
   });
 
-  should("writeToFile", async () => {
-    const path = "/tmp/test_datacube";
-    await dc.writeToFile(path);
-    const dcFromFile = await DataCube.readFromFile(path);
+  context("writeToFile", () => {
+    let tmpFolder, dcPath;
 
-    // Clean up the files that were written
-    await Deno.remove(path + ".json");
-    await Deno.remove(path + ".dimens.bin");
-    await Deno.remove(path + ".metrics.bin");
+    setup(async () => {
+      tmpFolder = await Deno.makeTempDir();
+      dcPath = tmpFolder + "/dc";
+    });
 
-    assert.equal(dc.getRows(), dcFromFile.getRows());
+    should("as plain json", async () => {
+      await dc.writeToFile(dcPath);
+      const dcFromFile = await DataCube.readFromFile(dcPath);
+
+      // Clean up the files that were written
+      await Deno.remove(dcPath + ".json");
+      await Deno.remove(dcPath + ".dimens.bin");
+      await Deno.remove(dcPath + ".metrics.bin");
+
+      assert.equal(dc.getRows(), dcFromFile.getRows());
+    });
+
+    should("as gzip", async () => {
+      await dc.writeToFile(dcPath, { gzip: true });
+
+      assert.isTrue(await fs.exists(dcPath + ".dimens.bin.gz"));
+      assert.isTrue(await fs.exists(dcPath + ".metrics.bin.gz"));
+      assert.isTrue(await fs.exists(dcPath + ".json.gz"));
+
+      const dcFromFile = await DataCube.readFromFile(dcPath, { gzip: true });
+      assert.equal(dc.getRows(), dcFromFile.getRows());
+    });
+
+    teardown(async () => {
+      await Deno.remove(tmpFolder, { recursive: true });
+    });
   });
 
   should("aggregateTailValues", () => {

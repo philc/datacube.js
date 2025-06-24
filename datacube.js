@@ -133,35 +133,58 @@ export function fromRows(dimens, metrics, rows) {
   return dc;
 }
 
-export function readFromFile(pathPrefix) {
+// Reads a datacube from a set of files.
+// - options:
+//   - gzip: whether the datacube was written as gzipped files.
+export function readFromFile(pathPrefix, options) {
   // Make filePath into an absolute path, which is required by the fetch API.
   const isRelative = !pathPrefix.startsWith("/");
   if (isRelative) {
     pathPrefix = Deno.cwd() + "/" + pathPrefix;
   }
-  return readFromUrl("file://" + pathPrefix);
+  return readFromUrl("file://" + pathPrefix, options);
 }
 
 //
 // A datacube is serialized as 3 files and can be fetched from the network (using fetch) or a file.
 // - urlPrefix: the prefix of the path. E.g. if the datacube is in tmp/dc.json, the pathPrefix is
 //   tmp/dc
+// - options:
+//   - gzip: whether the datacube was written as gzipped files.
 //
 // NOTE(philc): This API could take a set of readable streams rather than just a path. We would need
 // to expose a variable which indicates the schema of how the files of a datacube are named.
-//
-export async function readFromUrl(urlPrefix) {
-  const response = await fetch(`${urlPrefix}.json`);
+export async function readFromUrl(urlPrefix, options) {
+  const extension = options?.gzip ? ".gz" : "";
+  let response = await fetch(`${urlPrefix}.json${extension}`);
+  let stream = response.body;
+  if (options?.gzip) {
+    const decompressed = stream.pipeThrough(new DecompressionStream("gzip"));
+    response = new Response(decompressed);
+  }
   const manifest = await response.json();
   const dc = new DataCube(manifest.dimens, manifest.metrics);
   dc.dimenIndexToValue = manifest.dimenIndexToValue;
 
+  // Returns an ArrayBuffer of bytes.
   // TODO(philc): This could be done more efficiently by copying/adopting the byte ranges directly.
-  let bytes;
-  bytes = await (await fetch(`${urlPrefix}.dimens.bin`)).arrayBuffer();
+  async function readBytes(path) {
+    const response = await fetch(path);
+    if (options?.gzip) {
+      const stream = (await response.blob()).stream();
+      const decompressed = stream.pipeThrough(new DecompressionStream("gzip"));
+      // We wouldn't need to create a new Response here if arrayBuffer() gets added to
+      // ReadableStream. See https://github.com/whatwg/streams/issues/1019
+      return await (await new Response(decompressed)).arrayBuffer();
+    } else {
+      return await response.arrayBuffer();
+    }
+  }
+
+  let bytes = await readBytes(`${urlPrefix}.dimens.bin${extension}`);
   dc.dimenKeyToIndices = new PagedArray(ARRAY_TYPES.dimenKeyToIndices, bytes);
 
-  bytes = await (await fetch(`${urlPrefix}.metrics.bin`)).arrayBuffer();
+  bytes = await readBytes(`${urlPrefix}.metrics.bin${extension}`);
   dc.metricsData = new PagedArray(ARRAY_TYPES.metrics, bytes);
 
   return dc;
@@ -510,21 +533,33 @@ export class DataCube {
     return fromRows(reducedDimens, Array.from(metricNames), rows);
   }
 
-  async writeToFile(pathPrefix) {
+  async writeToFile(pathPrefix, options) {
     const jsonStruct = {
       dimens: this.dimens,
       metrics: this.metrics,
       count: this.count(),
       dimenIndexToValue: this.dimenIndexToValue,
     };
-    await Deno.writeTextFile(
-      `${pathPrefix}.json`,
-      JSON.stringify(jsonStruct, null, 2),
-    );
+
+    function makeFileWriter(file) {
+      if (options?.gzip) {
+        const stream = new CompressionStream("gzip");
+        stream.readable.pipeTo(file.writable);
+        return stream.writable.getWriter();
+      } else {
+        return file.writable.getWriter();
+      }
+    }
+
+    const extension = options?.gzip ? ".gz" : "";
+    const filename = `${pathPrefix}.json${extension}`;
+    const writer = makeFileWriter(await Deno.create(filename));
+    writer.write(new TextEncoder().encode(JSON.stringify(jsonStruct, null, 2)));
+    writer.close();
 
     const writePagedArray = async (fileName, pagedArray) => {
       const file = await Deno.create(fileName);
-      const writer = file.writable.getWriter();
+      const writer = makeFileWriter(file);
       for (const [pIndex, page] of pagedArray.pages.entries()) {
         let chunk;
         if ((pIndex + 1) * page.length < pagedArray.length) {
@@ -540,8 +575,8 @@ export class DataCube {
       writer.close();
     };
 
-    await writePagedArray(`${pathPrefix}.dimens.bin`, this.dimenKeyToIndices);
-    await writePagedArray(`${pathPrefix}.metrics.bin`, this.metricsData);
+    await writePagedArray(`${pathPrefix}.dimens.bin${extension}`, this.dimenKeyToIndices);
+    await writePagedArray(`${pathPrefix}.metrics.bin${extension}`, this.metricsData);
   }
 
   // Collapses all rows where the value of `dimen` is not one of the top `n`, as determined by
